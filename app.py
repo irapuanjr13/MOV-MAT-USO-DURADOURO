@@ -153,5 +153,5 @@ def get_chefia():
      return jsonify({"chefia": chefia[0] if len(chefia) > 0 else ""})
 
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5000))  # Usa a porta do ambiente ou 5000 como fallback
+    port = int(os.environ.get("PORT", 5001))  # Usa a porta do ambiente ou 5001 como fallback
     app.run(debug=True, port=port)
