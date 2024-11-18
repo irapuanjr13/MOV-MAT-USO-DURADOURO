@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Guia de Circulação Interna</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>Guia de Circulação Interna</h1>
+        {% if error %}
+            <p class="error">{{ error }}</p>
+        {% endif %}
+        <form method="POST" action="/">
+            <label for="bmp_numbers">Nº BMPs (separados por vírgula):</label>
+            <input type="text" id="bmp_numbers" name="bmp_numbers" required>
+            <label for="secao_origem">Seção de Origem:</label>
+            <select id="secao_origem" name="secao_origem" required>
+                <option value="">Selecione</option>
+                {% for secao in secoes_origem %}
+                    <option value="{{ secao }}">{{ secao }}</option>
+                {% endfor %}
+            </select>
+            <label for="chefia_origem">Chefia de Origem:</label>
+            <input type="text" id="chefia_origem" name="chefia_origem" readonly>
+            <label for="secao_destino">Seção de Destino:</label>
+            <select id="secao_destino" name="secao_destino" required>
+                <option value="">Selecione</option>
+                {% for secao in secoes_destino %}
+                    <option value="{{ secao }}">{{ secao }}</option>
+                {% endfor %}
+            </select>
+            <label for="chefia_destino">Chefia de Destino:</label>
+            <input type="text" id="chefia_destino" name="chefia_destino" readonly>
+            <div id="quantidades"></div>
+            <button type="submit">Gerar PDF</button>
+        </form>
+    </div>
+    <script>
+    document.getElementById("bmp_numbers").addEventListener("input", function () {
+        const bmpList = this.value.split(",").map(bmp => bmp.trim()).filter(bmp => bmp !== "");
+        const container = document.getElementById("quantidades");
+        container.innerHTML = "";
+        bmpList.forEach(bmp => {
+            const label = document.createElement("label");
+            label.textContent = `Quantidade a movimentar para BMP ${bmp}:`;
+            const input = document.createElement("input");
+            input.type = "number";
+            input.name = `quantidade_${bmp}`;
+            input.min = "0";
+            input.required = true;
+            container.appendChild(label);
+            container.appendChild(input);
+        });
+    });
+</script>
+</body>
+</html>
