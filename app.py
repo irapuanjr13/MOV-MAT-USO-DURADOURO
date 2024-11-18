@@ -150,7 +150,8 @@ def get_chefia():
     else:
         return jsonify({"error": "Tipo inválido"}), 400
 
-    return jsonify({"chefia": chefia[0] if len(chefia) > 0 else ""})
+     return jsonify({"chefia": chefia[0] if len(chefia) > 0 else ""})
 
 if __name__ == "__main__":
-    app.run(debug=True, port=5001)
+    port = int(os.environ.get("PORT", 5000))  # Usa a porta do ambiente ou 5000 como fallback
+    app.run(debug=True, port=port)
