@@ -116,7 +116,7 @@ def index():
                 "index.html",
                 secoes_origem=secoes_origem,
                 secoes_destino=secoes_destino,
-                error="Os itens não pertencem à conta '87 - MATERIAL DE CONSUMO DE USO DURADOURO'."
+                error="este (s) nº de BMP não pertence(m) à conta '87 - MATERIAL DE CONSUMO DE USO DURADOURO'."
             )
 
         # Cálculo de valores
