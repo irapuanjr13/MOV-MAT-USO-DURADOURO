@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
@@ -179,6 +178,25 @@
             }
         });
     });
+
+    // Adiciona campos para quantidade a movimentar
+        document.getElementById("bmp_numbers").addEventListener("blur", function () {
+            const bmpNumbers = this.value.split(",").map(bmp => bmp.trim());
+            const container = document.getElementById("bmp_fields");
+            container.innerHTML = ""; // Limpa campos antigos
+            bmpNumbers.forEach(bmp => {
+                if (bmp) {
+                    const div = document.createElement("div");
+                    div.classList.add("bmp-quantidade");
+                    div.innerHTML = `
+                        <label for="quantidade_${bmp}">Quantidade a Movimentar para BMP ${bmp}:</label>
+                        <input type="number" id="quantidade_${bmp}" name="quantidade_${bmp}" min="0" required>
+                    `;
+                    container.appendChild(div);
+                }
+            });
+        });
+
     </script>
 </body>
 </html>
