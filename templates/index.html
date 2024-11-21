@@ -33,7 +33,7 @@
             font-weight: bold;
             color: #555;
         }
-        select, input[type="text"], button {
+        select, input[type="text"], input[type="number"], button {
             width: 100%;
             padding: 8px;
             border: 1px solid #ccc;
@@ -64,6 +64,9 @@
             padding: 10px 0;
             background-color: #f4f4f9;
         }
+        .bmp-quantidade {
+            margin-bottom: 15px;
+        }
     </style>
     <!-- Adicionando jQuery -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
@@ -81,6 +84,7 @@
                 <label for="bmp_number">Números de BMP (separados por vírgula):</label>
                 <input type="text" id="bmp_number" name="bmp_numbers" placeholder="Ex.: 123, 456, 789">
             </div>
+            <div id="bmp_fields"></div>
             <div class="form-group">
                 <label for="secao_origem">Seção de Origem:</label>
                 <input type="text" id="secao_origem" name="secao_origem" readonly>
@@ -110,7 +114,7 @@
 
     <div class="observacao" id="observacao">
         A Guia gerada deve ser encaminhada a Seção de Registro, via SIGADAER.
-        Para gerar o modelo do ofício, <a href="http://www.gapls.intraer/index.php/setores-novo/assessorias/comunicacao-social/category/178-modelos" target="_blank">clique aqui</a>..
+        Para gerar o modelo do ofício, <a href="http://www.gapls.intraer/index.php/setores-novo/assessorias/comunicacao-social/category/178-modelos" target="_blank">clique aqui</a>.
     </div>
 
     <footer>
@@ -124,27 +128,20 @@
             const bmpNumbers = $(this).val().split(",").map(bmp => bmp.trim());
 
             if (bmpNumbers.length > 0) {
-                console.log("Enviando BMPs: ", bmpNumbers);  // Verifique no console se os BMPs estão sendo enviados corretamente
-
                 $.ajax({
                     url: "/autocomplete",  // Lógica de preenchimento do campo de seção e chefia de origem
                     type: "POST",
                     contentType: "application/json",
                     data: JSON.stringify({ "bmp_numbers": bmpNumbers }),  // Passa todos os BMPs, mesmo que seja um só
                     success: function(response) {
-                        console.log("Resposta do servidor:", response);  // Verifique a resposta do servidor
-                        
-                        // Preencher os campos de seção e chefia de origem para todos os BMPs
-                        bmpNumbers.forEach(function(bmp) {
-                            if (response[bmp]) {
-                                if (response[bmp].secao_origem) {
-                                    $("#secao_origem").val(response[bmp].secao_origem);
-                                }
-                                if (response[bmp].chefia_origem) {
-                                    $("#chefia_origem").val(response[bmp].chefia_origem);
-                                }
+                        if (response) {
+                            // Atualizar campos de seção e chefia de origem com base no primeiro BMP
+                            const firstBmp = bmpNumbers[0];
+                            if (response[firstBmp]) {
+                                $("#secao_origem").val(response[firstBmp].secao_origem || "");
+                                $("#chefia_origem").val(response[firstBmp].chefia_origem || "");
                             }
-                        });
+                        }
                     },
                     error: function() {
                         console.error("Erro ao buscar os dados dos BMPs!");
@@ -161,12 +158,12 @@
                     url: "/get_chefia",
                     type: "POST",
                     contentType: "application/json",
-                    data: JSON.stringify({ "secao": secaoDestino, "tipo": "destino" }), // Envia a seção de destino ao backend
+                    data: JSON.stringify({ "secao": secaoDestino, "tipo": "destino" }),
                     success: function(response) {
                         if (response.chefia) {
-                            $("#chefia_destino").val(response.chefia);  // Preencher o campo Chefia de Destino
+                            $("#chefia_destino").val(response.chefia);
                         } else {
-                            $("#chefia_destino").val('');  // Limpar se não houver chefia encontrada
+                            $("#chefia_destino").val('');
                         }
                     },
                     error: function() {
@@ -174,13 +171,12 @@
                     }
                 });
             } else {
-                $("#chefia_destino").val('');  // Limpar o campo Chefia de Destino se não houver seção selecionada
+                $("#chefia_destino").val('');
             }
         });
-    });
 
-    // Adiciona campos para quantidade a movimentar
-        document.getElementById("bmp_numbers").addEventListener("blur", function () {
+        // Adiciona campos para quantidade a movimentar
+        $("#bmp_number").on("blur", function () {
             const bmpNumbers = this.value.split(",").map(bmp => bmp.trim());
             const container = document.getElementById("bmp_fields");
             container.innerHTML = ""; // Limpa campos antigos
@@ -190,13 +186,13 @@
                     div.classList.add("bmp-quantidade");
                     div.innerHTML = `
                         <label for="quantidade_${bmp}">Quantidade a Movimentar para BMP ${bmp}:</label>
-                        <input type="number" id="quantidade_${bmp}" name="quantidade_${bmp}" min="0" required>
+                        <input type="number" id="quantidade_${bmp}" name="quantidade_${bmp}" min="0" placeholder="Digite a quantidade" required>
                     `;
                     container.appendChild(div);
                 }
             });
         });
-
+    });
     </script>
 </body>
 </html>
