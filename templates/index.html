@@ -1,59 +1,184 @@
+
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-br">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Guia de Circulação Interna</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        /* Estilos para a página */
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f9;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 800px;
+            margin: 20px auto;
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #555;
+        }
+        select, input[type="text"], button {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        button {
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .error {
+            color: red;
+            font-size: 14px;
+        }
+        .success {
+            color: green;
+            font-size: 14px;
+        }
+        footer {
+            text-align: center;
+            font-size: 12px;
+            color: #666;
+            padding: 10px 0;
+            background-color: #f4f4f9;
+        }
+    </style>
+    <!-- Adicionando jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 </head>
 <body>
     <div class="container">
         <h1>Guia de Circulação Interna</h1>
-        {% if error %}
-            <p class="error">{{ error }}</p>
-        {% endif %}
-        <form method="POST" action="/">
-            <label for="bmp_numbers">Nº BMPs (separados por vírgula):</label>
-            <input type="text" id="bmp_numbers" name="bmp_numbers" required>
-            <label for="secao_origem">Seção de Origem:</label>
-            <select id="secao_origem" name="secao_origem" required>
-                <option value="">Selecione</option>
-                {% for secao in secoes_origem %}
-                    <option value="{{ secao }}">{{ secao }}</option>
-                {% endfor %}
-            </select>
-            <label for="chefia_origem">Chefia de Origem:</label>
-            <input type="text" id="chefia_origem" name="chefia_origem" readonly>
-            <label for="secao_destino">Seção de Destino:</label>
-            <select id="secao_destino" name="secao_destino" required>
-                <option value="">Selecione</option>
-                {% for secao in secoes_destino %}
-                    <option value="{{ secao }}">{{ secao }}</option>
-                {% endfor %}
-            </select>
-            <label for="chefia_destino">Chefia de Destino:</label>
-            <input type="text" id="chefia_destino" name="chefia_destino" readonly>
-            <div id="quantidades"></div>
-            <button type="submit">Gerar PDF</button>
+        <form method="POST" action="/" id="guia-form">
+            <div class="error">
+                {% if error %}
+                    {{ error }}
+                {% endif %}
+            </div>
+            <div class="form-group">
+                <label for="bmp_number">Números de BMP (separados por vírgula):</label>
+                <input type="text" id="bmp_number" name="bmp_numbers" placeholder="Ex.: 123, 456, 789">
+            </div>
+            <div class="form-group">
+                <label for="secao_origem">Seção de Origem:</label>
+                <input type="text" id="secao_origem" name="secao_origem" readonly>
+            </div>
+            <div class="form-group">
+                <label for="chefia_origem">Chefia de Origem:</label>
+                <input type="text" id="chefia_origem" name="chefia_origem" readonly>
+            </div>
+            <div class="form-group">
+                <label for="secao_destino">Seção de Destino:</label>
+                <select id="secao_destino" name="secao_destino">
+                    <option value="" disabled selected>Selecione uma seção</option>
+                    {% for secao in secoes_destino %}
+                        <option value="{{ secao }}">{{ secao }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="chefia_destino">Chefia de Destino:</label>
+                <input type="text" id="chefia_destino" name="chefia_destino" readonly>
+            </div>
+            <div class="form-group">
+                <button type="submit">Gerar Guia</button>
+            </div>
         </form>
     </div>
+
+    <div class="observacao" id="observacao">
+        A Guia gerada deve ser encaminhada a Seção de Registro, via SIGADAER.
+        Para gerar o modelo do ofício, <a href="http://www.gapls.intraer/index.php/setores-novo/assessorias/comunicacao-social/category/178-modelos" target="_blank">clique aqui</a>..
+    </div>
+
+    <footer>
+        Criado por <strong>Cb Irapuan</strong>
+    </footer>
+
     <script>
-    document.getElementById("bmp_numbers").addEventListener("input", function () {
-        const bmpList = this.value.split(",").map(bmp => bmp.trim()).filter(bmp => bmp !== "");
-        const container = document.getElementById("quantidades");
-        container.innerHTML = "";
-        bmpList.forEach(bmp => {
-            const label = document.createElement("label");
-            label.textContent = `Quantidade a movimentar para BMP ${bmp}:`;
-            const input = document.createElement("input");
-            input.type = "number";
-            input.name = `quantidade_${bmp}`;
-            input.min = "0";
-            input.required = true;
-            container.appendChild(label);
-            container.appendChild(input);
+    $(document).ready(function() {
+        // Função para atualizar os campos de origem com base no(s) BMP(s)
+        $("#bmp_number").on("input", function() {
+            const bmpNumbers = $(this).val().split(",").map(bmp => bmp.trim());
+
+            if (bmpNumbers.length > 0) {
+                console.log("Enviando BMPs: ", bmpNumbers);  // Verifique no console se os BMPs estão sendo enviados corretamente
+
+                $.ajax({
+                    url: "/autocomplete",  // Lógica de preenchimento do campo de seção e chefia de origem
+                    type: "POST",
+                    contentType: "application/json",
+                    data: JSON.stringify({ "bmp_numbers": bmpNumbers }),  // Passa todos os BMPs, mesmo que seja um só
+                    success: function(response) {
+                        console.log("Resposta do servidor:", response);  // Verifique a resposta do servidor
+                        
+                        // Preencher os campos de seção e chefia de origem para todos os BMPs
+                        bmpNumbers.forEach(function(bmp) {
+                            if (response[bmp]) {
+                                if (response[bmp].secao_origem) {
+                                    $("#secao_origem").val(response[bmp].secao_origem);
+                                }
+                                if (response[bmp].chefia_origem) {
+                                    $("#chefia_origem").val(response[bmp].chefia_origem);
+                                }
+                            }
+                        });
+                    },
+                    error: function() {
+                        console.error("Erro ao buscar os dados dos BMPs!");
+                    }
+                });
+            }
+        });
+
+        // Evento para preencher a chefia de destino quando a seção de destino for selecionada
+        $("#secao_destino").on("change", function() {
+            const secaoDestino = $(this).val();
+            if (secaoDestino) {
+                $.ajax({
+                    url: "/get_chefia",
+                    type: "POST",
+                    contentType: "application/json",
+                    data: JSON.stringify({ "secao": secaoDestino, "tipo": "destino" }), // Envia a seção de destino ao backend
+                    success: function(response) {
+                        if (response.chefia) {
+                            $("#chefia_destino").val(response.chefia);  // Preencher o campo Chefia de Destino
+                        } else {
+                            $("#chefia_destino").val('');  // Limpar se não houver chefia encontrada
+                        }
+                    },
+                    error: function() {
+                        console.error("Erro ao buscar a chefia de destino!");
+                    }
+                });
+            } else {
+                $("#chefia_destino").val('');  // Limpar o campo Chefia de Destino se não houver seção selecionada
+            }
         });
     });
-</script>
+    </script>
 </body>
 </html>
