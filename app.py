@@ -45,7 +45,7 @@ class PDF(FPDF):
         return text
 
     def add_table(self, dados_bmps):
-        col_widths = [15, 55, 15, 30, 30, 30]
+        col_widths = [15, 60, 20, 33, 33, 33]
         headers = ["Nº BMP", "Nomenclatura", "Qtde", "Valor Atualizado", "Qtde a Movimentar", "Valor a Movimentar"]
 
         # Adicionar cabeçalho da tabela
