@@ -32,6 +32,9 @@
             margin-bottom: 5px;
             font-weight: bold;
             color: #555;
+            word-wrap: break-word; /* Quebra de texto em palavras longas */
+            overflow-wrap: break-word; /* Compatibilidade */
+            white-space: normal; /* Permitir múltiplas linhas */
         }
         select, input[type="text"], input[type="number"], button {
             width: 100%;
@@ -39,6 +42,9 @@
             border: 1px solid #ccc;
             border-radius: 4px;
             font-size: 14px;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            white-space: normal;
         }
         button {
             background-color: #007bff;
@@ -52,10 +58,14 @@
         .error {
             color: red;
             font-size: 14px;
+            white-space: pre-wrap; /* Garantir quebra de texto em mensagens longas */
+            overflow-wrap: break-word;
         }
         .success {
             color: green;
             font-size: 14px;
+            white-space: pre-wrap;
+            overflow-wrap: break-word;
         }
         footer {
             text-align: center;
@@ -63,9 +73,6 @@
             color: #666;
             padding: 10px 0;
             background-color: #f4f4f9;
-        }
-        .bmp-quantidade {
-            margin-bottom: 15px;
         }
     </style>
     <!-- Adicionando jQuery -->
@@ -84,7 +91,6 @@
                 <label for="bmp_number">Números de BMP (separados por vírgula):</label>
                 <input type="text" id="bmp_number" name="bmp_numbers" placeholder="Ex.: 123, 456, 789">
             </div>
-            <div id="bmp_fields"></div>
             <div class="form-group">
                 <label for="secao_origem">Seção de Origem:</label>
                 <input type="text" id="secao_origem" name="secao_origem" readonly>
@@ -123,24 +129,21 @@
 
     <script>
     $(document).ready(function() {
-        // Função para atualizar os campos de origem com base no(s) BMP(s)
+        // Atualiza campos de origem
         $("#bmp_number").on("input", function() {
             const bmpNumbers = $(this).val().split(",").map(bmp => bmp.trim());
-
             if (bmpNumbers.length > 0) {
                 $.ajax({
-                    url: "/autocomplete",  // Lógica de preenchimento do campo de seção e chefia de origem
+                    url: "/autocomplete",
                     type: "POST",
                     contentType: "application/json",
-                    data: JSON.stringify({ "bmp_numbers": bmpNumbers }),  // Passa todos os BMPs, mesmo que seja um só
+                    data: JSON.stringify({ "bmp_numbers": bmpNumbers }),
                     success: function(response) {
                         if (response) {
-                            // Atualizar campos de seção e chefia de origem com base no primeiro BMP
-                            const firstBmp = bmpNumbers[0];
-                            if (response[firstBmp]) {
-                                $("#secao_origem").val(response[firstBmp].secao_origem || "");
-                                $("#chefia_origem").val(response[firstBmp].chefia_origem || "");
-                            }
+                            const secaoOrigem = response.secao_origem || "";
+                            const chefiaOrigem = response.chefia_origem || "";
+                            $("#secao_origem").val(secaoOrigem);
+                            $("#chefia_origem").val(chefiaOrigem);
                         }
                     },
                     error: function() {
@@ -150,7 +153,7 @@
             }
         });
 
-        // Evento para preencher a chefia de destino quando a seção de destino for selecionada
+        // Preenche chefia de destino
         $("#secao_destino").on("change", function() {
             const secaoDestino = $(this).val();
             if (secaoDestino) {
@@ -158,13 +161,9 @@
                     url: "/get_chefia",
                     type: "POST",
                     contentType: "application/json",
-                    data: JSON.stringify({ "secao": secaoDestino, "tipo": "destino" }),
+                    data: JSON.stringify({ "secao": secaoDestino }),
                     success: function(response) {
-                        if (response.chefia) {
-                            $("#chefia_destino").val(response.chefia);
-                        } else {
-                            $("#chefia_destino").val('');
-                        }
+                        $("#chefia_destino").val(response.chefia || "");
                     },
                     error: function() {
                         console.error("Erro ao buscar a chefia de destino!");
@@ -173,24 +172,6 @@
             } else {
                 $("#chefia_destino").val('');
             }
-        });
-
-        // Adiciona campos para quantidade a movimentar
-        $("#bmp_number").on("blur", function () {
-            const bmpNumbers = this.value.split(",").map(bmp => bmp.trim());
-            const container = document.getElementById("bmp_fields");
-            container.innerHTML = ""; // Limpa campos antigos
-            bmpNumbers.forEach(bmp => {
-                if (bmp) {
-                    const div = document.createElement("div");
-                    div.classList.add("bmp-quantidade");
-                    div.innerHTML = `
-                        <label for="quantidade_${bmp}">Quantidade a Movimentar para BMP ${bmp}:</label>
-                        <input type="number" id="quantidade_${bmp}" name="quantidade_${bmp}" min="0" placeholder="Digite a quantidade" required>
-                    `;
-                    container.appendChild(div);
-                }
-            });
         });
     });
     </script>
